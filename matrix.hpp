@@ -14,21 +14,21 @@ private:
 };
 
 
-//В этом классе реалиузется объект матрицы
+//В этом классе реалиузется квадратная матрица
 class Matrix
 {
 public:
 	Matrix();
 	Matrix(std::vector<std::vector<double>>);
 	Matrix transp();
-	std::vector<std::vector<double>> get_coefficients();
-	int column_size();
-	int row_size();
-	double get_norm();				//Возвращает 2-норму матрицы
-	void print();					//Печатает матрицу
+	std::vector<std::vector<double>> get_coefficients() const;
+	int size() const;
+	double get_norm() const;				//Возвращает 2-норму матрицы
+	void print() const;					//Печатает матрицу
 	std::pair<Matrix,Matrix> QR_rot_decomposition();//QR разложение, полученное вращениями
+	bool is_upper_triangle() const;
 	~Matrix();
-	friend Matrix operator*(Matrix,Matrix); 	//Возвращает произведение матриц
+	friend Matrix operator*(const Matrix&,const Matrix&); 	//Возвращает произведение матриц
 	
 private:
 	
@@ -40,4 +40,5 @@ Matrix Givens_rotation(int pivot_position, int delete_position, double pivot_val
 
 
 //Функция возвращает результат QR алгоритма от исходной матрицы
-Matrix QR_algorithm(Matrix);
+Matrix QR_algorithm(Matrix,int max_iterations);
+Matrix get_Hessenberg(Matrix);

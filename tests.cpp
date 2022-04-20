@@ -4,54 +4,96 @@
 #include<time.h>
 #include<ctime>
 void print_test();
-void mult_test(int size);
+void mult_test(Matrix&,Matrix&);
 Matrix generate_matrix(int size, int seed=0);
-double time_int_function( void f(int), int int_value=10);
+Matrix generate_sym_matrix(int size, int seed=0);
+double time_matrix_function(Matrix&, void f(Matrix&));
+double time_matrix_function(Matrix&,Matrix&, void f(Matrix&,Matrix&));
+
 void test_givens_rotation();
 void transp_test();
 void rot_decomposition_test(int size);
-
+void RQ_algorithm_test(Matrix&);
+void Hessenberg_test(int size);
+void RQ_Hessenberg_test(Matrix&);
 
 int main()
 {
-//	time_int_function(mult_test,1000);
-//	test_givens_rotation();
-//	print_test();
-//	unsigned int start_time = clock();
-///	mult_test(500);
-//	unsigned int time=clock()-start_time;
-//	std::cout<<"time is "<<(float)time/CLOCKS_PER_SEC<<"s"<<std::endl;
-//	generate_matrix(1000);	
-//	transp_test();
-//	test_givens_rotation();
-//	rot_decomposition_test();
-	time_int_function(rot_decomposition_test,20);
+	int size = 100;
+	rot_decomposition_test(size);
+//	Matrix A = generate_sym_matrix(size,10);
+//	Matrix B = generate_sym_matrix(10,20);
+//	time_int_function(A,B,mult_test);
+//	rot_decomposition_test(10);
+//	RQ_algorithm_test(10);
+	
+//	time_matrix_function(A,RQ_Hessenberg_test);
+//	std::cout<<"Now lets test simple RQ algorithm"<<std::endl;
+//	time_int_function(A,RQ_algorithm_test);
 	return 0;
+}
+
+void RQ_Hessenberg_test(Matrix &A)
+{
+	std::cout<<"Original matrix is"<<std::endl;
+	A.print();
+	Matrix B=get_Hessenberg(A);
+	std::cout<<"Hessenberg matrix is"<<std::endl;
+	B.print();
+	std::cout<<"Result of Hessenberg QR is matrix:"<<std::endl;
+//	QR_algorithm(A).print();
+}
+
+void Hessenberg_test(int size)
+{
+	Matrix A=generate_sym_matrix(size);
+	std::cout<<"Original matrix is"<<std::endl;
+	A.print();
+	std::cout<<"Now let's transorm it to the Hessenbger matrix"<<std::endl;
+	get_Hessenberg(A).print();
+}
+
+void RQ_algorithm_test(Matrix& A)
+{
+	std::cout<<"Originate matrix is"<<std::endl;
+	A.print();
+	std::cout<<"Result of simple QR is matrix:"<<std::endl;
+//	QR_algorithm(A).print();
 }
 
 void rot_decomposition_test(int size)
 {
 	std::pair<Matrix,Matrix> QR;
-	Matrix A=generate_matrix(size);
+	Matrix A=generate_sym_matrix(size);
+	Matrix Q,R,QT;
+	int start_time=clock();
+
 	std::cout<<"Original matrix is"<<std::endl;
 	A.print();
 	std::cout<<"Now let's decompose it"<<std::endl;
 	QR=A.QR_rot_decomposition();
+	Q=QR.first;
+	R=QR.second;
 	std::cout<<"Q matrix is"<<std::endl;
-	QR.first.print();
+	Q.print();
 	std::cout<<"R matrix is"<<std::endl;
-	QR.second.print();
+	R.print();
 	std::cout<<"Let's have some test::"<<std::endl;
 	std::cout<<"1.Check Q*R:"<<std::endl;
-	(QR.first*QR.second).print();
+	(Q*R).print();
 	std::cout<<"2.Check Q is ortogonal"<<std::endl;
 	std::cout<<"Q^T*Q"<<std::endl;
-	(QR.first*QR.first.transp()).print();
+	QT=Q.transp();
+	(Q*QT).print();
+	int time=clock()-start_time;
+	std::cout<<"time is"<<(double)time/CLOCKS_PER_SEC<<"s"<<std::endl;
+
+//	(QR.first*QR.first.transp()).print();
 }
 
 void transp_test()
 {
-	Matrix A=generate_matrix(10);
+	Matrix A=generate_matrix(4);
 	A.print();
 	std::cout<<"now transporting"<<std::endl;
 	(A.transp()).print();
@@ -69,18 +111,28 @@ void test_givens_rotation()
 	std::cout<<"G matrix is"<<std::endl;
 	(Givens_rotation(0,1,a[0][pos_x],a[pos_y][pos_x],size)).print();
 	std::cout<<"Rotated matrix is"<<std::endl;
-	((Givens_rotation(0,1,a[0][pos_x],a[pos_y][pos_x],size))*A).print();
+//	((Givens_rotation(0,1,a[0][pos_x],a[pos_y][pos_x],size))*A).print();
 }
 
-double time_int_function(void f(int),int int_value)
+double time_matrix_function(Matrix &A, void f(Matrix&))
 {
 	int start_time=clock();
-	f(int_value);
+	f(A);
 	int time=clock()-start_time;
 	std::cout<<"time is"<<(double)time/CLOCKS_PER_SEC<<"s"<<std::endl;
 }
-//А как много времени уходит на генерацию и как много времени уходит на само умножение ?
-//Эти процессы надо разделить
+
+double time_matrix_function(Matrix &A,Matrix &B, void f(Matrix&, Matrix&))
+{
+	std::cout<<"Time function activated"<<std::endl;
+	int start_time=clock();
+	std::cout<<"function has begun"<<std::endl;
+	f(A,B);
+	int time=clock()-start_time;
+	std::cout<<"time is"<<(double)time/CLOCKS_PER_SEC<<"s"<<std::endl;
+}
+
+
 Matrix generate_matrix(int size,int seed)
 {
 	std::vector<double> row(size);
@@ -94,20 +146,32 @@ Matrix generate_matrix(int size,int seed)
 	return Matrix(mat);
 }
 
-void mult_test(int size)
+Matrix generate_sym_matrix(int size,int seed)
 {
-	Matrix A = generate_matrix(size);
-	Matrix B = generate_matrix(size,100);
-//	std::cout<<"Multiplying test"<<std::endl;
-//	std::cout<<"Matrix A is"<<std::endl;
-//	A.print();
-//	std::cout<<"Matrix B is"<<std::endl;
-//	B.print();
-//	std::cout<<"their multiplication is C:"<<std::endl;
+	std::vector<double> row(size);
+	std::vector<std::vector<double>> mat(size);
+	for(int i = 0;i < size; i++)
+		mat[i]=row;
+	srand(time(NULL)+seed);
+	for(int i = 0; i< size;i++)
+	{
+		for(int j = i; j< size;j++)
+		{
+			int k = rand() % 10;
+			mat[i][j]=k;
+			mat[j][i]=k;
+		}
+	}
+	return Matrix(mat);
+}
+
+void mult_test(Matrix &A, Matrix &B)
+{
 	Matrix C;
-//	std::cout<<"HEHE"<<std::endl;
+	std::cout<<"Mult test activated"<<std::endl;
 	C=A*B;
-//	C.print();	
+	std::cout<<"Mult test ended\\result is : "<<std::endl;
+	C.print();
 }
 //
 void print_test()
