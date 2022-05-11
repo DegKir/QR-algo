@@ -13,27 +13,39 @@ double time_matrix_function(Matrix&,Matrix&, void f(Matrix&,Matrix&));
 void test_givens_rotation();
 void transp_test();
 void rot_decomposition_test(int size);
-void RQ_algorithm_test(Matrix&);
+void RQ_algorithm_test(Matrix&,int);
 void Hessenberg_test(int size);
-void RQ_Hessenberg_test(Matrix&);
-
+void RQ_Hessenberg_test(Matrix&,int);
+void cut_test(Matrix&);
 int main()
 {
-	int size = 100;
-	rot_decomposition_test(size);
-//	Matrix A = generate_sym_matrix(size,10);
-//	Matrix B = generate_sym_matrix(10,20);
-//	time_int_function(A,B,mult_test);
+	int size = 12;
+//	rot_decomposition_test(size);
+	Matrix A = generate_sym_matrix(size,10);
+//	cut_test(A);
+	Matrix B = generate_sym_matrix(size,20);
+//	time_matrix_function(A,B,mult_test);
 //	rot_decomposition_test(10);
-//	RQ_algorithm_test(10);
-	
-//	time_matrix_function(A,RQ_Hessenberg_test);
-//	std::cout<<"Now lets test simple RQ algorithm"<<std::endl;
-//	time_int_function(A,RQ_algorithm_test);
+//	RQ_algorithm_test(A,10000);
+
+
+
+	RQ_Hessenberg_test(A,10000);
 	return 0;
 }
 
-void RQ_Hessenberg_test(Matrix &A)
+void cut_test(Matrix& A)
+{
+	int size=A.size();
+	for(int i = 0; i< size; i++)
+	{
+		A.print();
+		std::cout<<"++++++++++++++"<<std::endl;
+		A=A.cut();
+	}
+}
+
+void RQ_Hessenberg_test(Matrix &A,int ticks)
 {
 	std::cout<<"Original matrix is"<<std::endl;
 	A.print();
@@ -41,7 +53,8 @@ void RQ_Hessenberg_test(Matrix &A)
 	std::cout<<"Hessenberg matrix is"<<std::endl;
 	B.print();
 	std::cout<<"Result of Hessenberg QR is matrix:"<<std::endl;
-//	QR_algorithm(A).print();
+	B=QR_algorithm(A,ticks);
+	B.print();
 }
 
 void Hessenberg_test(int size)
@@ -53,12 +66,13 @@ void Hessenberg_test(int size)
 	get_Hessenberg(A).print();
 }
 
-void RQ_algorithm_test(Matrix& A)
+void RQ_algorithm_test(Matrix& A,int ticks)
 {
 	std::cout<<"Originate matrix is"<<std::endl;
 	A.print();
 	std::cout<<"Result of simple QR is matrix:"<<std::endl;
-//	QR_algorithm(A).print();
+	Matrix B = QR_algorithm(A,ticks);
+	B.print();
 }
 
 void rot_decomposition_test(int size)

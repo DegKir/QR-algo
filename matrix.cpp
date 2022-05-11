@@ -4,9 +4,9 @@
 #include<vector>
 #include<cmath>
 
-#define SIZE 100
+#define SIZE 400
 #define EPSILON 1E-10
-
+#define LAMBDA_EPSILON 0.01
 Matrix::Matrix(){}
 
 Matrix::Matrix(std::vector<std::vector<double>> coefficients) : _coefficients(coefficients){}
@@ -69,6 +69,21 @@ Matrix Matrix::transp()
 	return Matrix(coef);
 }
 
+Matrix Matrix::cut()
+{
+	_coefficients;
+	int new_size = this->size()-1;
+	std::vector<double> new_coefficients_row(new_size);
+	std::vector<std::vector<double>> new_coefficients(new_size);
+	for(int i = 0; i < new_size; i++)
+		new_coefficients[i]=new_coefficients_row;
+     	for(int i = 0; i < new_size; i++)
+		for(int j = 0; j< new_size ;j++)
+			new_coefficients[i][j]=_coefficients[i+1][j+1];
+	Matrix result(new_coefficients);
+	return result;
+}
+
 //Нужно дописать динамическюу память
 Matrix operator*(const Matrix &A,const Matrix &B)
 {
@@ -99,55 +114,68 @@ Matrix operator*(const Matrix &A,const Matrix &B)
 		}
 	}
 
+
 	register double sum=0;
 	for(int i = 0; i < size; ++i)
 	{
-		for(int j = 0; j < size; ++j)
+		double *c_arr_pointer=c[i];;
+		for(int j = 0 ; j < size; ++j)
+			c_arr_pointer[j]=0;
+		
+		for(int k = 0; k < size; ++k)
 		{
-			sum=0;
-			c[i][j]=0;
-			for(int k = 0; k< size; ++k)
-			{
-				sum+= a[i][k]*b[k][j];
-			}
-			if(sum*sum<EPSILON)
-				sum=0;
-			c[i][j]=sum;
+			const double *b_arr_pointer =b[k];
+			register double a_val = a[i][k];
+			for(int j = 0; j < size; ++j)
+				c_arr_pointer[j] += a_val*b_arr_pointer[j];
 		}
-	}
-//
-//	register double sum=0;
-//	int column_size=A.column_size();
-//	int A_row_size=A.row_size();
-//	int row_size=B.row_size();
-//
-//	for(int i = 0; i < column_size;i++)
-//	{
-//		row=A._coefficients[i];
-//		for(int j = 0; j < row_size;j++)
+//		double *c_arr_pointer=c[i];
+//		for(int j = 0; j < size; ++j)
 //		{
-//			for(int k = 0; k < A_row_size;k++)
+//			sum=0;
+//			c_arr_pointer[j]=0;
+//			const double *arrpoint=a[i];
+//			for(int k = 0; k< size; ++k)
 //			{
-//				sum+=row[k]*bcoef[k][j];
+//				sum+= arrpoint[k]*b[k][j];
 //			}
 //			if(sum*sum<EPSILON)
 //				sum=0;
-//			ccoef[i][j]=sum;
-//			sum=0;
+//			c_arr_pointer[j]=sum;
 //		}
-//	}
-
+	}
 
 	for(int i = 0; i < size;i++)
 	{
+		register double c_temp;
+		double * c_arr_pointer=c[i];
 		for(int j = 0; j< size;j++)
 		{
-			ccoef[i][j]=c[i][j];
+			c_temp=c_arr_pointer[j];
+			if(c_temp*c_temp<EPSILON)
+				c_temp=0;
+			ccoef[i][j]=c_temp;
 		}
 	}	
 	Matrix result(ccoef);
 	return result;
 }
+
+double Matrix::get_left_up_element()
+{
+	return _coefficients[0][0];
+}
+
+std::vector<double> Matrix::get_first_column()
+{
+	int size = this->size();
+	std::vector<double> column(size);
+	for(int i = 0; i < size; i++)
+		column[i]=_coefficients[i][0];
+	return column;
+
+}
+
 
 Matrix::~Matrix(){}
 
@@ -220,12 +248,23 @@ std::pair<Matrix,Matrix> Matrix::QR_rot_decomposition()
 	return std::pair<Matrix,Matrix>{Q,R};
 }
 
+double get_norm(std::vector<double> a)
+{
+	int size=a.size();
+	double qsum=0;
+	for(int i = 0; i<size;i++)
+		qsum+=a[i]*a[i];
+	return sqrt(qsum);
+}
+
 Matrix QR_algorithm(Matrix A, int max_iterations)
 {
+	std::vector<double> lambdas;
 	Matrix B=A;
 	Matrix Q,R;
 	std::pair<Matrix,Matrix> QR;
 	int k = 0;
+	std::vector<double> first_column;
 	while(!B.is_upper_triangle())
 	{
 		k++;
@@ -235,10 +274,24 @@ Matrix QR_algorithm(Matrix A, int max_iterations)
 		QR=B.QR_rot_decomposition();
 		Q=QR.first;
 		R=QR.second;
-		B=R*Q;
+		B=R*Q; 
+		first_column=B.get_first_column();
+		first_column[0]=first_column[0]-B.get_left_up_element();
+		if(get_norm(first_column)<LAMBDA_EPSILON)//Если удовлетворяет погрешности, то уменьшаем матрицу
+		{
+			lambdas.push_back(B.get_left_up_element());
+			B=B.cut();
+		}
 	}
+	
+	//Нужно будет переоформить след функции
+	std::cout<<"LAMBDAS ARE"<<std::endl;
+	for(int i = 0; i < lambdas.size(); i++)
+		std::cout<<"l["<<i<<"]="<<lambdas[i]<<std::endl;
 	return B;
 }
+
+
 
 Matrix get_Hessenberg(Matrix A)
 {

@@ -27,6 +27,9 @@ public:
 	void print() const;					//Печатает матрицу
 	std::pair<Matrix,Matrix> QR_rot_decomposition();//QR разложение, полученное вращениями
 	bool is_upper_triangle() const;
+	std::vector<double> get_first_column();
+	double get_left_up_element();
+	Matrix cut();//Убирает первую строку и первый столбец
 	~Matrix();
 	friend Matrix operator*(const Matrix&,const Matrix&); 	//Возвращает произведение матриц
 	
